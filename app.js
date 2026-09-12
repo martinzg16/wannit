@@ -40,3 +40,12 @@ $('#copy-address').addEventListener('click', async () => {
 });
 function revealTarget() { const target = document.getElementById(location.hash.slice(1)); if(target?.tagName === 'DETAILS') target.open = true; }
 window.addEventListener('hashchange',revealTarget);revealTarget();
+
+// Reveal each section once; content stays available without JavaScript and with reduced motion.
+const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
+if(!motionPreference.matches && 'IntersectionObserver' in window){
+ const sections=[...document.querySelectorAll('main > section:not(.hero)')].filter(node=>node.getBoundingClientRect().top>innerHeight);
+ const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target);}},{threshold:.05,rootMargin:'0px 0px -20px 0px'});
+ sections.forEach(section=>{section.classList.add('motion-reveal');observer.observe(section);});
+ motionPreference.addEventListener('change',event=>{if(event.matches){sections.forEach(section=>section.classList.add('is-visible'));observer.disconnect();}});
+}
