@@ -1,5 +1,6 @@
 'use strict';
 const $ = selector => document.querySelector(selector);
+const track = (event, props) => { if (window.posthog) window.posthog.capture(event, props); };
 let selected = 'all', onlySales = false, toastTimer;
 function notify(message) {
  $('#toast').textContent = message;
@@ -18,8 +19,8 @@ function renderDemo() {
  $('#demo-count').textContent = `${count} ${count === 1 ? 'producto de ejemplo' : 'productos de ejemplo'}`;
  $('#demo-empty').hidden = count > 0;
 }
-document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => { selected = button.dataset.filter; renderDemo(); }));
-$('#sale-filter').addEventListener('click', () => { onlySales = !onlySales; renderDemo(); });
+document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => { selected = button.dataset.filter; renderDemo(); track('demo_filter_selected', {category: selected}); }));
+$('#sale-filter').addEventListener('click', () => { onlySales = !onlySales; renderDemo(); track('demo_sale_filter_toggled', {active: onlySales}); });
 const extra = $('#extra-filters'), toggle = $('#more-filters');
 toggle.addEventListener('click', event => {
  const open = toggle.getAttribute('aria-expanded') !== 'true';
@@ -33,11 +34,14 @@ document.querySelectorAll('.save-demo').forEach(button => button.addEventListene
  const saved = button.getAttribute('aria-pressed') !== 'true';
  button.setAttribute('aria-pressed',String(saved)); button.textContent = saved ? '✓' : '+';
  notify(saved ? 'Guardado en esta demo. Así de fácil.' : 'Desmarcado en la demo. Tu wishlist real no cambia.');
+ track('demo_product_saved', {saved, product: button.closest('.demo-card')?.querySelector('h3')?.textContent});
 }));
 $('#copy-address').addEventListener('click', async () => {
+ track('install_address_copied');
  try { await navigator.clipboard.writeText('chrome://extensions'); notify('Dirección copiada. Pégala en la barra de Chrome.'); }
  catch { notify('Copia esta dirección: chrome://extensions'); }
 });
+$('.download')?.addEventListener('click', () => track('chrome_download_clicked'));
 function revealTarget() { const target = document.getElementById(location.hash.slice(1)); if(target?.tagName === 'DETAILS') target.open = true; }
 window.addEventListener('hashchange',revealTarget);revealTarget();
 
